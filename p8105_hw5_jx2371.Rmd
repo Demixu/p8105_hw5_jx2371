@@ -1,0 +1,12 @@
+---
+title: "p8105_hw5_jx2371"
+author: "Jingyu Xu"
+date: "2018/11/4"
+output: github_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
+
+
