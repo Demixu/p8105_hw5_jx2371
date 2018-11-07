@@ -31,4 +31,19 @@ tidy_data = map(df, read_data)%>%
   mutate(week = str_replace(week, "week_", ""))
 ```
 
+##Draw a spaghetti plot
+Now, we use ggplot to draw a spagetti plot
+```{r}
+ggplot(tidy_data, aes(x = as.numeric(week), y = data, color = subject))+
+  geom_line()+
+  labs(x = "week", 
+         y = "participant data")+
+  facet_grid(.~group)
+
+ggplot(tidy_data, aes(x = as.numeric(week), y = data, color = group))+
+         geom_line()+
+         facet_wrap(.~subject, ncol = 5)
+```
+
+
 
