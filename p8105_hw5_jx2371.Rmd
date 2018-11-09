@@ -99,5 +99,21 @@ estimate_tidy = map2(.x = homcide_by_city$unsolved_number, .y = homcide_by_city$
 estimate_tidy
 ```
 
+4、Create a plot that shows the estimates and CIs for each city – check out geom_errorbar for a way to add error bars based on the upper and lower limits. Organize cities according to the proportion of unsolved homicides
+```{r}
+estimate_tidy%>%
+            mutate(city_state = fct_reorder(city_state, estimate))%>%
+            ggplot(aes(x = city_state, y = estimate,))+
+            geom_point()+
+            geom_errorbar(aes(ymin = conf.low, ymax= conf.high))+
+            theme(axis.text.x =  element_text(angle = 60))+
+            labs(
+              title = "the estimate and CIs for unsolved homcide across the U.S.",
+              x = "city",
+              y = "estimates and CIs"
+            )
+```
+
+
 
 
