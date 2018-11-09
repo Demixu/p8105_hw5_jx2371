@@ -42,8 +42,9 @@ ggplot(tidy_data, aes(x = as.numeric(week), y = data, color = subject))+
 
 ```
 
+Overall，we can see the data of experimental group is higher than that of control group.
 
-#Prolbem 2
+#Problem 2
 ##import the data and describe the raw data
 ```{r}
 homcide = read.csv(file = "./data2/homicide-data.csv")
