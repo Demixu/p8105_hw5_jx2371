@@ -13,12 +13,12 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 First of all, a code chunck is used to create a dataframe containing all file names 
 ```{r}
 library(tidyverse)
-df = list.files(path = "./data")
+df = list.files(path = "./data1")
 ```
 
 Then, a code chunk is written to read the data in all the files and collected them in one dataset. A seires cleaning is made to the dataset.
 ```{r}
-read_data = function(x){read_csv(file = str_c("./data/", x))%>%
+read_data = function(x){read_csv(file = str_c("./data1/", x))%>%
     mutate(group_name=x)}
 tidy_data = map(df, read_data)%>%
   bind_rows()%>%
@@ -46,4 +46,30 @@ ggplot(tidy_data, aes(x = as.numeric(week), y = data, color = group))+
 ```
 
 
+#Prolbem 2
+##import the data and describe the raw data
+```{r}
+homcide = read.csv(file = "./data2/homicide-data.csv")
+```
+##manipulate the data 
+1.Create a city_state variable (e.g. “Baltimore, MD”) and then summarize within cities to obtain the total number of homicides and the number of unsolved homicides (those for which the disposition is “Closed without arrest” or “Open/No arrest”).
+```{r}
+homcide_new=homcide%>%
+  mutate(city_state = str_c(city, ",", state))
+```
+
+```{r}
+df_1 = homcide_new%>%
+  group_by(city_state)%>%
+  summarize(total_number = n())
+
+df_2 = homcide_new%>%
+  filter(disposition %in% c("Closed without arrest", "Open/No arrest"))%>%
+  group_by(city_state)%>%
+  summarize(unsolved_number = n())
+
+homcide_by_city = left_join(df_1, df_2, by = "city_state")
+homcide_by_city[is.na(homcide_by_city)] = 0
+homcide_by_city
+```
 
