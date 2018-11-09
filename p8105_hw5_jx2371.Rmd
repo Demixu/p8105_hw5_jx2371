@@ -40,9 +40,6 @@ ggplot(tidy_data, aes(x = as.numeric(week), y = data, color = subject))+
          y = "participant data")+
   facet_grid(.~group)
 
-ggplot(tidy_data, aes(x = as.numeric(week), y = data, color = group))+
-         geom_line()+
-         facet_wrap(.~subject, ncol = 5)
 ```
 
 
@@ -70,6 +67,37 @@ df_2 = homcide_new%>%
 
 homcide_by_city = left_join(df_1, df_2, by = "city_state")
 homcide_by_city[is.na(homcide_by_city)] = 0
-homcide_by_city
+knitr::kable(homcide_by_city)
 ```
+
+2.For the city of Baltimore, MD, use the prop.test function to estimate the proportion of homicides that are unsolved; save the output of prop.test as an R object, apply the broom::tidy to this object and pull the estimated proportion and confidence intervals from the resulting tidy dataframe
+```{r}
+#caculate the total homecide number of Baltimore
+total = homcide_by_city%>%
+  filter(city_state %in% "Baltimore,MD")%>%
+  select(total_number, unsolved_number)%>%
+  .$total_number
+#caculate the unsolved homecide number of Baltimore
+unsolved = homcide_by_city%>%
+  filter(city_state %in% "Baltimore,MD")%>%
+  select(total_number, unsolved_number)%>%
+  .$unsolved_number
+#use prop.test and pull out the estimated proportion and confidence intervals
+Baltimore_estimate = prop.test(unsolved, total)%>%
+  broom::tidy()
+```
+The estimate proportion of Baltimore,MD is `r Baltimore_estimate$estimate`. The confidence intervals of Baltimore, MD is (`r Baltimore_estimate$conf.low`,`r Baltimore_estimate$conf.high`) 
+
+3.run prop.test for each of the cities in your dataset, and extract both the proportion of unsolved homicides and the confidence interval for each. Do this within a “tidy” pipeline, making use of purrr::map, purrr::map2, list columns and unnest as necessary to create a tidy dataframe with estimated proportions and CIs for each city
+```{r}
+clean_data = function(x,n){prop.test(x, n)%>%
+    broom::tidy()}
+estimate_tidy = map2(.x = homcide_by_city$unsolved_number, .y = homcide_by_city$total_number, ~clean_data(x =.x, n = .y))%>%
+  bind_rows()%>%
+  bind_cols(homcide_by_city,.)%>%
+  select(city_state,estimate,conf.low,conf.high)
+estimate_tidy
+```
+
+
 
