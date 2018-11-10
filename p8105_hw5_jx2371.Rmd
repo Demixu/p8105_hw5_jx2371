@@ -10,13 +10,13 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 
 #Problem1
 ##read and clean the data
-First of all, a code chunck is used to create a dataframe containing all file names 
+First of all, a code chunk is used to create a dataframe containing all file names 
 ```{r}
 library(tidyverse)
 df = list.files(path = "./data1")
 ```
 
-Then, a code chunk is written to read the data in all the files and collected them in one dataset. A seires cleaning is made to the dataset.
+Then, a code chunk is written to read the data in all the files and collected them in one dataset. A seires of cleaning is made to the dataset.
 ```{r}
 read_data = function(x){read_csv(file = str_c("./data1/", x))%>%
     mutate(group_name=x)}
@@ -30,19 +30,25 @@ tidy_data = map(df, read_data)%>%
   gather(key = week, value = data, week_1:week_8)%>%
   mutate(week = str_replace(week, "week_", ""))
 ```
+Finally, the tidy dataset contains "group" variable showing the type of the study group(control arm/experimental arm); the "week" variable showing which week the subject data is observed, the "subject" variable showing which subject is oberved with a unique id and the"data" variable showing the data observed related to a single subject. 
 
 ##Draw a spaghetti plot
-Now, we use ggplot to draw a spagetti plot
+Now, we use ggplot to draw a spagetti plot. Additionaly, a smooth estimate curve(the dark blue line) is drawn to see the general trend of subject data over the `r nrow(distinct(tidy_data, week))` weeks.
+
 ```{r}
-ggplot(tidy_data, aes(x = as.numeric(week), y = data, color = subject))+
-  geom_line()+
+ggplot(tidy_data, aes(x = as.numeric(week), y = data))+
+  geom_smooth(se = FALSE)+
+  geom_line(aes(color=subject))+
   labs(x = "week", 
-         y = "participant data")+
+      y = "participant data",
+      title = "spaghetti plot of subject data in experimental and control arm")+
   facet_grid(.~group)
 
 ```
 
-Overall，we can see the data of experimental group is higher than that of control group.
+Comment on the difference between two groups:
+
+Overall，we can see the data of subjects in experimental group is higher than that of control group. And from the perspective of general trend over time, the control group  is more gentle and the smooth curve seems almost flat with a slightly decrease. However, the trend of subject data in experimental group is obviously increasing over time.
 
 #Problem 2
 ##import the data and describe the raw data
@@ -58,7 +64,7 @@ str(homcide)
 
 
 ##manipulate the data 
-1. Create a city_state variable (e.g. “Baltimore, MD”) and then summarize within cities to obtain the total number of homicides and the number of unsolved homicides (those for which the disposition is “Closed without arrest” or “Open/No arrest”).
+1. The code chunk below creates a city_state variable (e.g. “Baltimore, MD”) and then summarizes within cities to obtain the total number of homicides and the number of unsolved homicides (those for which the disposition is “Closed without arrest” or “Open/No arrest”).
 ```{r}
 homcide_new=homcide%>%
   mutate(city_state = str_c(city, ",", state))
@@ -79,7 +85,8 @@ homcide_by_city[is.na(homcide_by_city)] = 0
 knitr::kable(homcide_by_city)
 ```
 
-2.For the city of Baltimore, MD, use the prop.test function to estimate the proportion of homicides that are unsolved; save the output of prop.test as an R object, apply the broom::tidy to this object and pull the estimated proportion and confidence intervals from the resulting tidy dataframe.
+2.For the city of Baltimore, MD, the code chunk below (1)uses the prop.test function to estimate the proportion of homicides that are unsolved; (2)save the output of prop.test as an R object, (3)apply the broom::tidy to this object. 
+Finally, I pull the estimated proportion and confidence intervals from the resulting tidy dataframe using inline R code.
 ```{r}
 #caculate the total homecide number of Baltimore
 total = homcide_by_city%>%
@@ -97,7 +104,7 @@ Baltimore_estimate = prop.test(unsolved, total)%>%
 ```
 The estimate proportion of Baltimore,MD is `r Baltimore_estimate$estimate`. The confidence intervals of Baltimore, MD is (`r Baltimore_estimate$conf.low`,`r Baltimore_estimate$conf.high`) 
 
-3.run prop.test for each of the cities in your dataset, and extract both the proportion of unsolved homicides and the confidence interval for each. Do this within a “tidy” pipeline, making use of purrr::map, purrr::map2, list columns and unnest as necessary to create a tidy dataframe with estimated proportions and CIs for each city
+3.run prop.test for each of the cities in your dataset, and extract both the proportion of unsolved homicides and the confidence interval for each. Do this within a “tidy” pipeline, making use of purrr::map, purrr::map2, list columns and unnest as necessary to create a tidy dataframe with estimated proportions and CIs for each city. In the pipeline below, purrr::map2, bind_rows(), bind_cols()are used to get a tidy dataframe.
 ```{r}
 clean_data = function(x,n){prop.test(x, n)%>%
     broom::tidy()}
@@ -109,7 +116,9 @@ estimate_tidy
 ```
 
 ##Draw a plot to show the estimates and CIs
-Create a plot that shows the estimates and CIs for each city – check out geom_errorbar for a way to add error bars based on the upper and lower limits. Organize cities according to the proportion of unsolved homicides.
+The chunk below creates a plot that shows the estimates and CIs for each city – geom_errorbar is used to add error bars based on the upper and lower limits. 
+
+Also, I organize cities according to the proportion of unsolved homicides from low to high using fct_reorder function.
 ```{r}
 estimate_tidy%>%
             mutate(city_state = fct_reorder(city_state, estimate))%>%
